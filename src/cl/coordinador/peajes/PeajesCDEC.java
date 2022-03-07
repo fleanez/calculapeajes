@@ -23,12 +23,15 @@ import java.awt.event.ItemEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
 import java.sql.Time;
 import java.util.HashMap;
 import java.util.Properties;
+import javax.swing.JTextArea;
 
 /**
  * Created on 19-mar-2010, 13:40:42
@@ -46,6 +49,10 @@ public class PeajesCDEC extends javax.swing.JFrame {
     private Properties propiedades; //Configuraciones del caso TODO: rename
     private static Properties config; //Configuraciones de la herramienta TODO: rename
     private static final String ARCHIVO_CONFIG = "config.xml"; //Nombre archivo unico de configuracion de la herramienta
+    private PrintStream standardOut;
+    private PrintStream standardErr;
+    private PrintStream customPrintStream;
+    private boolean bShowMensajes = false;
 
     /** Creates new form NewJFrame1 */
     public PeajesCDEC() {
@@ -64,6 +71,10 @@ public class PeajesCDEC extends javax.swing.JFrame {
     private void initComponents() {
 
         btnHorizonteLiquida = new javax.swing.ButtonGroup();
+        dialogPrintMensajes = new javax.swing.JDialog();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        txtAreaPrintMensajes = new javax.swing.JTextArea();
+        btnClearTxtAreaPrintMensajes = new javax.swing.JButton();
         textoCalculo = new javax.swing.JLabel();
         jLabel11 = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
@@ -127,11 +138,52 @@ public class PeajesCDEC extends javax.swing.JFrame {
         jLabel18 = new javax.swing.JLabel();
         FecPago = new javax.swing.JTextField();
         botonEscReliq = new javax.swing.JButton();
+        chkboxUsarRangoDeAnos = new javax.swing.JCheckBox();
+        jLabel12 = new javax.swing.JLabel();
+        jLabel13 = new javax.swing.JLabel();
+        cuadroAnoFinalRangoAEvaluar = new javax.swing.JComboBox();
+        cuadroAnoInicialRangoAEvaluar = new javax.swing.JComboBox();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
         jMenuItem2 = new javax.swing.JMenuItem();
         menuOpciones = new javax.swing.JMenuItem();
+
+        dialogPrintMensajes.setTitle("Info");
+
+        txtAreaPrintMensajes.setColumns(20);
+        txtAreaPrintMensajes.setRows(5);
+        jScrollPane1.setViewportView(txtAreaPrintMensajes);
+
+        btnClearTxtAreaPrintMensajes.setText("Clear");
+        btnClearTxtAreaPrintMensajes.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnClearTxtAreaPrintMensajesActionPerformed(evt);
+            }
+        });
+
+        org.jdesktop.layout.GroupLayout dialogPrintMensajesLayout = new org.jdesktop.layout.GroupLayout(dialogPrintMensajes.getContentPane());
+        dialogPrintMensajes.getContentPane().setLayout(dialogPrintMensajesLayout);
+        dialogPrintMensajesLayout.setHorizontalGroup(
+            dialogPrintMensajesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(dialogPrintMensajesLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 388, Short.MAX_VALUE)
+                .addContainerGap())
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, dialogPrintMensajesLayout.createSequentialGroup()
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(btnClearTxtAreaPrintMensajes)
+                .add(156, 156, 156))
+        );
+        dialogPrintMensajesLayout.setVerticalGroup(
+            dialogPrintMensajesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(dialogPrintMensajesLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 281, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(btnClearTxtAreaPrintMensajes)
+                .addContainerGap())
+        );
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         addWindowListener(new java.awt.event.WindowAdapter() {
@@ -160,7 +212,7 @@ public class PeajesCDEC extends javax.swing.JFrame {
 
         cuadroAnoAEvaluar.setEditable(true);
         cuadroAnoAEvaluar.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
-        cuadroAnoAEvaluar.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "2014", "2015", "2016", "2017", "2018", "2019", "2020" }));
+        cuadroAnoAEvaluar.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "2022", "2023", "2024", "2025", "2026", "2027", "2028", "2029", "2030", "2031" }));
         cuadroAnoAEvaluar.setMaximumSize(new java.awt.Dimension(70, 19));
         cuadroAnoAEvaluar.setMinimumSize(new java.awt.Dimension(70, 19));
         cuadroAnoAEvaluar.setPreferredSize(new java.awt.Dimension(70, 19));
@@ -188,7 +240,7 @@ public class PeajesCDEC extends javax.swing.JFrame {
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel1)
                     .add(cuadroAnoAEvaluar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(15, Short.MAX_VALUE))
         );
 
         jPanel2.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -254,7 +306,7 @@ public class PeajesCDEC extends javax.swing.JFrame {
                         .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(botonDirectorioSalida)
                             .add(botonDirectorioEntrada))))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(28, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -332,7 +384,7 @@ public class PeajesCDEC extends javax.swing.JFrame {
                     .add(cuadroAnoBase, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(cuadroSeleccionTipoCalculo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(16, Short.MAX_VALUE))
         );
 
         jPanel4.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -515,7 +567,7 @@ public class PeajesCDEC extends javax.swing.JFrame {
                         .add(progreso, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 230, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(12, 12, 12)
                         .add(etiquetaTiempo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 128, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(29, Short.MAX_VALUE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -532,7 +584,7 @@ public class PeajesCDEC extends javax.swing.JFrame {
                     .add(jLabel9)
                     .add(progreso, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(etiquetaTiempo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(16, Short.MAX_VALUE))
         );
 
         jPanel5.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -633,7 +685,7 @@ public class PeajesCDEC extends javax.swing.JFrame {
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(jSplitPane3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jSplitPane4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(10, Short.MAX_VALUE))
         );
 
         pnlReliquidacion.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -770,8 +822,38 @@ public class PeajesCDEC extends javax.swing.JFrame {
                 .add(pnlReliquidacionLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(botonEscReliq)
                     .add(botonCalcularReliq))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(17, Short.MAX_VALUE))
         );
+
+        chkboxUsarRangoDeAnos.setText("Usar rango de años");
+
+        jLabel12.setText("Año Inicial");
+
+        jLabel13.setText("Año Final");
+
+        cuadroAnoFinalRangoAEvaluar.setEditable(true);
+        cuadroAnoFinalRangoAEvaluar.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+        cuadroAnoFinalRangoAEvaluar.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "2022", "2023", "2024", "2025", "2026", "2027", "2028", "2029", "2030", "2031", "2032", "2033", "2034", "2035", "2036", "2037", "2038", "2039", "2040" }));
+        cuadroAnoFinalRangoAEvaluar.setMaximumSize(new java.awt.Dimension(70, 19));
+        cuadroAnoFinalRangoAEvaluar.setMinimumSize(new java.awt.Dimension(70, 19));
+        cuadroAnoFinalRangoAEvaluar.setPreferredSize(new java.awt.Dimension(70, 19));
+        cuadroAnoFinalRangoAEvaluar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cuadroAnoFinalRangoAEvaluarAccion(evt);
+            }
+        });
+
+        cuadroAnoInicialRangoAEvaluar.setEditable(true);
+        cuadroAnoInicialRangoAEvaluar.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+        cuadroAnoInicialRangoAEvaluar.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "2022", "2023", "2024", "2025", "2026", "2027", "2028", "2029", "2030", "2031", "2032", "2033", "2034", "2035", "2036", "2037", "2038", "2039", "2040" }));
+        cuadroAnoInicialRangoAEvaluar.setMaximumSize(new java.awt.Dimension(70, 19));
+        cuadroAnoInicialRangoAEvaluar.setMinimumSize(new java.awt.Dimension(70, 19));
+        cuadroAnoInicialRangoAEvaluar.setPreferredSize(new java.awt.Dimension(70, 19));
+        cuadroAnoInicialRangoAEvaluar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cuadroAnoInicialRangoAEvaluarAccion(evt);
+            }
+        });
 
         jMenu1.setText("File");
         jMenu1.setFont(jMenu1.getFont().deriveFont(jMenu1.getFont().getSize()-2f));
@@ -814,17 +896,31 @@ public class PeajesCDEC extends javax.swing.JFrame {
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 561, Short.MAX_VALUE)
-                    .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 561, Short.MAX_VALUE)
-                    .add(jPanel5, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 561, Short.MAX_VALUE)
-                    .add(pnlReliquidacion, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 561, Short.MAX_VALUE)
+                    .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 576, Short.MAX_VALUE)
+                    .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 576, Short.MAX_VALUE)
+                    .add(jPanel5, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 576, Short.MAX_VALUE)
+                    .add(pnlReliquidacion, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 576, Short.MAX_VALUE)
                     .add(textoCalculo, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
-                        .add(jLabel11)
-                        .add(18, 18, 18)
-                        .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 194, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(layout.createSequentialGroup()
+                                .add(jLabel11)
+                                .add(54, 54, 54))
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                                .add(chkboxUsarRangoDeAnos)
+                                .add(28, 28, 28)))
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 194, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(layout.createSequentialGroup()
+                                .add(jLabel12)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(cuadroAnoInicialRangoAEvaluar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(35, 35, 35)
+                                .add(jLabel13)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(cuadroAnoFinalRangoAEvaluar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                         .add(0, 0, Short.MAX_VALUE))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 561, Short.MAX_VALUE))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 576, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -837,6 +933,13 @@ public class PeajesCDEC extends javax.swing.JFrame {
                         .add(24, 24, 24)
                         .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cuadroAnoInicialRangoAEvaluar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel12)
+                    .add(jLabel13)
+                    .add(cuadroAnoFinalRangoAEvaluar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(chkboxUsarRangoDeAnos))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 134, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 47, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -884,7 +987,28 @@ public class PeajesCDEC extends javax.swing.JFrame {
     }//GEN-LAST:event_btnPagoRetAnualActionPerformed
 
     private void btnCalcularPeajecalcular(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCalcularPeajecalcular
-        calcularPeajes();
+        
+        if(bShowMensajes){
+            this.dialogPrintMensajes.setSize(this.dialogPrintMensajes.getPreferredSize());
+            this.dialogPrintMensajes.setVisible(true);
+            this.setCustomPrint();
+        }
+        //Calcula un rango de años
+        if(this.chkboxUsarRangoDeAnos.isSelected()){
+            int anoInicial = Integer.parseInt(this.cuadroAnoInicialRangoAEvaluar.getSelectedItem().toString());
+            int anoFinal = Integer.parseInt(this.cuadroAnoFinalRangoAEvaluar.getSelectedItem().toString());
+            File f_DirectorioEntrada = new File(getSelectedDirectorioEntrada());
+            File f_DirectorioSalida = new File(getSelectedDirectorioSalida());
+            for (int year = anoInicial; year <= anoFinal; year++) {
+                if (continueToPeajes(year)) {
+                    Peajes.calculaPeajes(f_DirectorioEntrada, f_DirectorioSalida, year);
+                }
+            }
+        }
+        //Calcula un solo año
+        else{
+            calcularPeajes();
+        }
     }//GEN-LAST:event_btnCalcularPeajecalcular
 
     private void btnCuadroAnualActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCuadroAnualActionPerformed
@@ -943,6 +1067,19 @@ public class PeajesCDEC extends javax.swing.JFrame {
             // Nothing
         }
     }//GEN-LAST:event_btnLiquidaAnualItemStateChanged
+
+    private void cuadroAnoInicialRangoAEvaluarAccion(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cuadroAnoInicialRangoAEvaluarAccion
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cuadroAnoInicialRangoAEvaluarAccion
+
+    private void cuadroAnoFinalRangoAEvaluarAccion(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cuadroAnoFinalRangoAEvaluarAccion
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cuadroAnoFinalRangoAEvaluarAccion
+
+    private void btnClearTxtAreaPrintMensajesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearTxtAreaPrintMensajesActionPerformed
+        // TODO add your handling code here:
+        this.txtAreaPrintMensajes.setText(null);
+    }//GEN-LAST:event_btnClearTxtAreaPrintMensajesActionPerformed
 
     public static void main(String args[]) {
                
@@ -1121,6 +1258,7 @@ public class PeajesCDEC extends javax.swing.JFrame {
     private javax.swing.JButton botonEscReliq;
     private javax.swing.JButton btnCalcularPeaje;
     private javax.swing.JButton btnCalcularProrrAnual;
+    private javax.swing.JButton btnClearTxtAreaPrintMensajes;
     private javax.swing.JButton btnCuadroAnual;
     private javax.swing.ButtonGroup btnHorizonteLiquida;
     private javax.swing.JRadioButton btnLiquidaAnual;
@@ -1129,18 +1267,24 @@ public class PeajesCDEC extends javax.swing.JFrame {
     private javax.swing.JButton btnPagoRetAnual;
     private javax.swing.JTextField campoDirectorioEntrada;
     private javax.swing.JTextField campoDirectorioSalida;
+    private javax.swing.JCheckBox chkboxUsarRangoDeAnos;
     private javax.swing.JComboBox cuadroAnoAEvaluar;
     private javax.swing.JComboBox cuadroAnoBase;
+    private javax.swing.JComboBox cuadroAnoFinalRangoAEvaluar;
+    private javax.swing.JComboBox cuadroAnoInicialRangoAEvaluar;
     private javax.swing.JComboBox cuadroSeleccionAgnoBase;
     private javax.swing.JComboBox cuadroSeleccionHidro;
     private javax.swing.JTextField cuadroSeleccionNEtapas;
     private javax.swing.JTextField cuadroSeleccionOffset;
     private javax.swing.JTextField cuadroSeleccionSlack;
     private javax.swing.JComboBox cuadroSeleccionTipoCalculo;
+    private javax.swing.JDialog dialogPrintMensajes;
     private javax.swing.JLabel etiquetaTiempo;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
@@ -1165,6 +1309,7 @@ public class PeajesCDEC extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel7;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JSplitPane jSplitPane2;
     private javax.swing.JSplitPane jSplitPane3;
@@ -1175,6 +1320,7 @@ public class PeajesCDEC extends javax.swing.JFrame {
     private javax.swing.JPanel pnlReliquidacion;
     private javax.swing.JProgressBar progreso;
     private javax.swing.JLabel textoCalculo;
+    private javax.swing.JTextArea txtAreaPrintMensajes;
     private javax.swing.JTextField txtFechaPago;
     // End of variables declaration//GEN-END:variables
 
@@ -1442,6 +1588,26 @@ public class PeajesCDEC extends javax.swing.JFrame {
         File f_Salida = new File(getSelectedDirectorioSalida());
         if (!f_Salida.exists()) {
             JOptionPane.showMessageDialog(this, "No existe directorio de salida: " + getSelectedDirectorioSalida() + "\nDebe ingresar una ruta valida", "Error de validación", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        return true;
+    }
+    
+    /** 
+     * Chequea que existan:
+     * <li>Planilla Ent del año correspondiente</li>
+     * <li>Exista directorio de salida</li>
+     * @param year
+     * @return 
+     */
+    private boolean continueToPeajes(int year){
+        if (!existsEnt()) {
+            JOptionPane.showMessageDialog(this, "No se encontró la planilla ENT para el año " + year + " en la ruta " + getSelectedDirectorioEntrada(), "Error de validación", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        File f_Salida = new File(getSelectedDirectorioSalida());
+        if (!f_Salida.exists()) {
+            JOptionPane.showMessageDialog(this, "No existe directorio de salida: " + year + "\nDebe ingresar una ruta valida", "Error de validación", JOptionPane.ERROR_MESSAGE);
             return false;
         }
         return true;
@@ -1926,6 +2092,13 @@ public class PeajesCDEC extends javax.swing.JFrame {
         String sShowReliq = getOptionValue("Muestra menu re-liquidacion", PeajesConstant.DataType.BOOLEAN);
         boolean bShowReliq = Boolean.parseBoolean(sShowReliq);
         pnlReliquidacion.setVisible(bShowReliq);
+        
+        //Ventana de mensajes
+        String sShowMensajes = getOptionValue("Mostrar mensajes", PeajesConstant.DataType.BOOLEAN);
+        bShowMensajes = Boolean.parseBoolean(sShowMensajes);
+        if(bShowMensajes){
+            customPrintStream = new PrintStream(new CustomOutputStream(this.txtAreaPrintMensajes));
+        }
         pack();
         this.validate();
     }
@@ -2134,6 +2307,38 @@ public class PeajesCDEC extends javax.swing.JFrame {
             	progreso.setIndeterminate(true);
             }
 
+        }
+    }
+    
+    private void setCustomPrint(){
+        System.setOut(customPrintStream);
+        System.setErr(customPrintStream);
+    }
+    
+    private void restorePrint(){
+        System.setOut(standardOut);
+        System.setErr(standardErr);
+    }
+
+
+    /**
+    * This class extends from OutputStream to redirect output to a JTextArrea
+    *
+    */
+    public class CustomOutputStream extends OutputStream {
+
+        private JTextArea textArea;
+
+        public CustomOutputStream(JTextArea textArea) {
+            this.textArea = textArea;
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            // redirects data to the text area
+            textArea.append(String.valueOf((char) b));
+            // scrolls the text area to the end of data
+            textArea.setCaretPosition(textArea.getDocument().getLength());
         }
     }
 
