@@ -53,6 +53,7 @@ public class PeajesCDEC extends javax.swing.JFrame {
     private PrintStream standardErr;
     private PrintStream customPrintStream;
     private boolean bShowMensajes = false;
+    private boolean bUsePlexosAPI = false;
 
     /** Creates new form NewJFrame1 */
     public PeajesCDEC() {
@@ -1439,6 +1440,7 @@ public class PeajesCDEC extends javax.swing.JFrame {
         timer.start();
         tInicio=System.currentTimeMillis();
         if (continueToProrrata ()) {
+            Prorratas.setPlexosAPIOption(bUsePlexosAPI);
             Prorratas.calcular(horizon, f_DirectorioEntrada, f_DirectorioSalida, nAnoAEvaluar, nMesAEvaluar, nAnoBase, nHidro, numEtapasAno, numSlack, offset, clientes);
         }
         
@@ -2099,6 +2101,10 @@ public class PeajesCDEC extends javax.swing.JFrame {
         if(bShowMensajes){
             customPrintStream = new PrintStream(new CustomOutputStream(this.txtAreaPrintMensajes));
         }
+        //API de PLEXOS
+        String sUsarAPIPlexos = getOptionValue("Utilizar API de PLEXOS", PeajesConstant.DataType.BOOLEAN);
+        bUsePlexosAPI = Boolean.parseBoolean(sUsarAPIPlexos);
+        
         pack();
         this.validate();
     }

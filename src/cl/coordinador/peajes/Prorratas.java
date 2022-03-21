@@ -24,6 +24,7 @@ import static cl.coordinador.peajes.PeajesConstant.PREFIJO_GMES;
 import static cl.coordinador.peajes.PeajesConstant.PREFIJO_PRORRATACONSUMO;
 import static cl.coordinador.peajes.PeajesConstant.PREFIJO_PRORRATAGEN;
 import static cl.coordinador.peajes.PeajesConstant.SLASH;
+import cl.flconsulting.tools.plexos.PLEXOScaller;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -66,6 +67,9 @@ public class Prorratas {
     private static final boolean USE_FACTORY = false; //Temp switch for the thread factory
     private static final boolean USE_MEMORY_READER = true; //switch para usar nuevo API lectura poi
     private static final boolean USE_MEMORY_WRITER = true; //switch para usar nuevo API escritura poi
+    private static final boolean USE_JAVA_SPLIT_SEPARATOR = true; //switch para usar string.split para separar caracteres
+    private static boolean USE_PLEXOS_API = true; //switch para utilizar api de plexos para lectura de archivo de generacion (plpcen)
+    private static boolean USE_PLP_FILES = true; //switch para utilizar archivos de plp de entrada
     
     private static int etapa;
     private static int etapaFinalizada;
@@ -476,7 +480,7 @@ public class Prorratas {
         assert(!(USE_FILECHANNEL & (USE_BUFFEREDSTREAM | USE_SCANNER))) : "Only one option USE_BUFFEREDSTREAM, USE_SCANNER or USE_FILECHANNEL should be true! Did you mess with these constants?";
         assert(!(USE_SCANNER & (USE_BUFFEREDSTREAM | USE_FILECHANNEL))) : "Only one option USE_BUFFEREDSTREAM, USE_SCANNER or USE_FILECHANNEL should be true! Did you mess with these constants?";
         
-        if (USE_MAPPED_NAMES) {
+        if (USE_MAPPED_NAMES || USE_JAVA_SPLIT_SEPARATOR) {
             int cont=0;
             for (String g: nomGen){
                 m_nomGen.put(g, cont);
@@ -488,82 +492,79 @@ public class Prorratas {
                 cont++;
             }
         }
-        
-        if (USE_BUFFEREDSTREAM) {
-            try {
-                //input = new BufferedReader( new FileReader(testReadFile) );
-                
-                input = new BufferedReader( new InputStreamReader(new FileInputStream(testReadFile), sEncodingPLP));
-                String line = null;
-                cuenta=0;
-                int indGen=0;
-                int indGen2=0;
-                int indHid=0;
-                int indEta=0;
-                float Pgen=0;
-                float ENS=0;
-                String sNomGenPrev = "";
-                Integer indexGen = null;
-                Integer indexGenSinFallas = null;
-                while ((line = input.readLine()) != null){
-                    if(cuenta>0){
-                        if((line.substring(0,5).trim()).equals("MEDIA")==false){
-                            if (USE_MAPPED_NAMES) {
-                                String sNomGenActual = (line.substring(32, line.indexOf(",", 32))).trim();
-                                if (!sNomGenActual.equals(sNomGenPrev)) {
-                                    indexGen = m_nomGen.get(sNomGenActual);
-                                    indexGenSinFallas = m_nomGen_Sin_Fallas.get(sNomGenActual);
-                                    sNomGenPrev = sNomGenActual;
-                                }
-                                indHid = Integer.valueOf((line.substring(4, line.indexOf(",", 4))).trim()) - 1;
-                                indEta = Integer.valueOf((line.substring(9, line.indexOf(",", 9))).trim()) - 1;
-                                if (indHid > numHidCenPLP) {
-                                    numHidCenPLP = indHid;
-                                }
-                                if (indHid + 1 > numHid) {
-                                    cuenta++;
-                                    continue;
-                                }
-                                if (indexGenSinFallas != null) {
-                                    if (indexGen != null) {
-                                        if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
-                                            Pgen = Float.valueOf((line.substring(153, line.indexOf(",", 153))).trim());
-                                            Gx[indexGen][indEta - etapaPeriodoIni][indHid] = Pgen; //TODO: This can cause an java.lang.ArrayIndexOutOfBoundsException when the selected hydro is lower than the values in plp file!
-                                        }
+        //aqui plexos
+        if(USE_PLEXOS_API){
+            System.out.println("Utilizando API de Plexos para leer generacion");
+            PLEXOScaller plexos = new PLEXOScaller("C:/temp/Model PRGMEN Solution.zip");
+            String[] generators = plexos.getGenerators();
+            for (String g : generators) {
+                for (int h = 0; h < numHid; h++) {
+                    double[] generation = plexos.getBlockMTGeneration(g, h);
+                    //TODO: Loop, chequea rango etapas y escribe a matriz Gx
+                }
+            }
+        }
+        else if(USE_PLP_FILES) {
+            if (USE_BUFFEREDSTREAM) {
+                try {
+                    //input = new BufferedReader( new FileReader(testReadFile) );
+                    input = new BufferedReader( new InputStreamReader(new FileInputStream(testReadFile), sEncodingPLP));
+                    String line = null;
+                    cuenta=0;
+                    int indGen=0;
+                    int indGen2=0;
+                    int indHid=0;
+                    int indEta=0;
+                    float Pgen=0;
+                    float ENS=0;
+                    String sNomGenPrev = "";
+                    Integer indexGen = null;
+                    Integer indexGenSinFallas = null;
+                    while ((line = input.readLine()) != null){
+                        if(cuenta>0){
+                            if ((line.substring(0, 5).trim()).equals("MEDIA") == false) {
+                                if (USE_JAVA_SPLIT_SEPARATOR) {
+                                    String[] lineItems = line.split(",");
+                                    String sHydro = lineItems[0];
+                                    String sEtapa = lineItems[1];
+                                    String sNomGenActual = lineItems[4].trim();
+                                    String sPGen = lineItems[9];
+                                    if (!sNomGenActual.equals(sNomGenPrev)) {
+                                        indexGen = m_nomGen.get(sNomGenActual);
+                                        indexGenSinFallas = m_nomGen_Sin_Fallas.get(sNomGenActual);
+                                        sNomGenPrev = sNomGenActual;
                                     }
-                                } else {
-                                    if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
-                                        ENS = Float.valueOf((line.substring(153, line.indexOf(",", 153))).trim());
-                                        FallaEtaHid[indEta - etapaPeriodoIni][indHid] += ENS; //TODO: This can cause an java.lang.ArrayIndexOutOfBoundsException when the selected hydro is lower than the values in plp file!
+                                    indHid = Integer.valueOf(sHydro.trim());
+                                    indEta = Integer.valueOf(sEtapa.trim());
+                                    if (indHid > numHidCenPLP) {
+                                        numHidCenPLP = indHid;
                                     }
-                                }
-                            } else {
-                                indGen = Calc.Buscar((line.substring(32, line.indexOf(",", 32))).trim(), nomGen);
-                                indGen2 = Calc.Buscar((line.substring(32, line.indexOf(",", 32))).trim(), nomGen_Sin_Fallas);
+                                    if (indHid + 1 > numHid) {
+                                        cuenta++;
+                                        continue;
+                                    }
 
-                                if (indGen2 > -1) {
-                                    if (indGen > -1) {
-                                        
-                                        //System.out.println(indGen +" "+nomGen[indGen]);
-                                        indHid = Integer.valueOf((line.substring(4, line.indexOf(",", 4))).trim()) - 1;
-                                        indEta = Integer.valueOf((line.substring(9, line.indexOf(",", 9))).trim()) - 1;
-                                        if (indHid > numHidCenPLP) {
-                                            numHidCenPLP = indHid;
+                                    if (indexGenSinFallas != null) {
+                                        if (indexGen != null) {
+                                            if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
+                                                Pgen = Float.valueOf(sPGen.trim());
+                                                Gx[indexGen][indEta - etapaPeriodoIni][indHid] = Pgen; //TODO: This can cause an java.lang.ArrayIndexOutOfBoundsException when the selected hydro is lower than the values in plp file!
+                                            }
                                         }
-                                        if (indHid + 1 > numHid) {
-                                            cuenta++;
-                                            continue;
-                                        }
-                                        //Pgen=Float.valueOf((line.substring(151,158)).trim()); //Peajes
-                                        Pgen = Float.valueOf((line.substring(153, line.indexOf(",", 153))).trim());
+                                    } else {
                                         if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
-                                            //System.out.println(indGen +" "+nomGen[indGen]);
-                                            Gx[indGen][indEta - etapaPeriodoIni][indHid] = Pgen; //TODO: This can cause an java.lang.ArrayIndexOutOfBoundsException when the selected hydro is lower than the values in plp file!
-                                            //System.out.println(Gx[indGen][indEta-etapaPeriodoIni][indHid]);
+                                            ENS = Float.valueOf(sPGen.trim());
+                                            FallaEtaHid[indEta - etapaPeriodoIni][indHid] += ENS; //TODO: This can cause an java.lang.ArrayIndexOutOfBoundsException when the selected hydro is lower than the values in plp file!
                                         }
-
                                     }
-                                } else {//suma las fallas
+                                }
+                                if (USE_MAPPED_NAMES) {
+                                    String sNomGenActual = (line.substring(32, line.indexOf(",", 32))).trim();
+                                    if (!sNomGenActual.equals(sNomGenPrev)) {
+                                        indexGen = m_nomGen.get(sNomGenActual);
+                                        indexGenSinFallas = m_nomGen_Sin_Fallas.get(sNomGenActual);
+                                        sNomGenPrev = sNomGenActual;
+                                    }
                                     indHid = Integer.valueOf((line.substring(4, line.indexOf(",", 4))).trim()) - 1;
                                     indEta = Integer.valueOf((line.substring(9, line.indexOf(",", 9))).trim()) - 1;
                                     if (indHid > numHidCenPLP) {
@@ -573,132 +574,182 @@ public class Prorratas {
                                         cuenta++;
                                         continue;
                                     }
-                                    //ENS=Float.valueOf((line.substring(151,158)).trim());
-                                    ENS = Float.valueOf((line.substring(153, line.indexOf(",", 153))).trim());
-                                    if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
-                                        FallaEtaHid[indEta - etapaPeriodoIni][indHid] += ENS; //TODO: This can cause an java.lang.ArrayIndexOutOfBoundsException when the selected hydro is lower than the values in plp file!
+                                    if (indexGenSinFallas != null) {
+                                        if (indexGen != null) {
+                                            if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
+                                                Pgen = Float.valueOf((line.substring(153, line.indexOf(",", 153))).trim());
+                                                Gx[indexGen][indEta - etapaPeriodoIni][indHid] = Pgen; //TODO: This can cause an java.lang.ArrayIndexOutOfBoundsException when the selected hydro is lower than the values in plp file!
+                                            }
+                                        }
+                                    } else {
+                                        if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
+                                            ENS = Float.valueOf((line.substring(153, line.indexOf(",", 153))).trim());
+                                            FallaEtaHid[indEta - etapaPeriodoIni][indHid] += ENS; //TODO: This can cause an java.lang.ArrayIndexOutOfBoundsException when the selected hydro is lower than the values in plp file!
+                                        }
                                     }
+                                } else {
+                                    indGen = Calc.Buscar((line.substring(32, line.indexOf(",", 32))).trim(), nomGen);
+                                    indGen2 = Calc.Buscar((line.substring(32, line.indexOf(",", 32))).trim(), nomGen_Sin_Fallas);
+
+                                    if (indGen2 > -1) {
+                                        if (indGen > -1) {
+
+                                            //System.out.println(indGen +" "+nomGen[indGen]);
+                                            indHid = Integer.valueOf((line.substring(4, line.indexOf(",", 4))).trim()) - 1;
+                                            indEta = Integer.valueOf((line.substring(9, line.indexOf(",", 9))).trim()) - 1;
+                                            if (indHid > numHidCenPLP) {
+                                                numHidCenPLP = indHid;
+                                            }
+                                            if (indHid + 1 > numHid) {
+                                                cuenta++;
+                                                continue;
+                                            }
+                                            //Pgen=Float.valueOf((line.substring(151,158)).trim()); //Peajes
+                                            Pgen = Float.valueOf((line.substring(153, line.indexOf(",", 153))).trim());
+                                            if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
+                                                //System.out.println(indGen +" "+nomGen[indGen]);
+                                                Gx[indGen][indEta - etapaPeriodoIni][indHid] = Pgen; //TODO: This can cause an java.lang.ArrayIndexOutOfBoundsException when the selected hydro is lower than the values in plp file!
+                                                //System.out.println(Gx[indGen][indEta-etapaPeriodoIni][indHid]);
+                                            }
+
+                                        }
+                                    } else {//suma las fallas
+                                        indHid = Integer.valueOf((line.substring(4, line.indexOf(",", 4))).trim()) - 1;
+                                        indEta = Integer.valueOf((line.substring(9, line.indexOf(",", 9))).trim()) - 1;
+                                        if (indHid > numHidCenPLP) {
+                                            numHidCenPLP = indHid;
+                                        }
+                                        if (indHid + 1 > numHid) {
+                                            cuenta++;
+                                            continue;
+                                        }
+                                        //ENS=Float.valueOf((line.substring(151,158)).trim());
+                                        ENS = Float.valueOf((line.substring(153, line.indexOf(",", 153))).trim());
+                                        if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
+                                            FallaEtaHid[indEta - etapaPeriodoIni][indHid] += ENS; //TODO: This can cause an java.lang.ArrayIndexOutOfBoundsException when the selected hydro is lower than the values in plp file!
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        cuenta++;
+                    }
+                } catch (java.io.UnsupportedEncodingException ex) {
+                    throw new IOException("Encoding invalido '" + sEncodingPLP + "' archivo despachos plp. Detalles: '" + ex.getMessage() +"'", ex);
+                } catch (NumberFormatException e) {
+                    throw new IOException("No fue posible convertir valor en linea '" + cuenta + "' archivo plp '" + ArchivoDespachoGeneradores +"'", e);
+                } finally {
+                    try {
+                        if (input != null) {
+                            input.close();
+                        }
+                    } catch (IOException ex) {
+                        ex.printStackTrace(System.out);
+                    }
+                }
+//                numHidCenPLP++; //por que se aumenta nuevamente?
+                if (numHidCenPLP > numHid) {
+                    throw new IOException("WARNING: Se encontraron " + numHidCenPLP + " hidrologias en archivo despachos PLP pero solo se leyeron " + numHid + ". Los resultados pueden ser imprecisos");
+                } else if (numHidCenPLP < numHid) {
+                    throw new IOException("WARNING: Solo se encontraron " + numHidCenPLP + " hidrologias en archivo despachos PLP y se esperaban " + numHid + ". Los resultados pueden ser imprecisos");
+                }
+            }
+
+            if (USE_FILECHANNEL) {
+                RandomAccessFile aFile = new RandomAccessFile(ArchivoDespachoGeneradores, "r");
+                FileChannel inChannel = aFile.getChannel();
+                ByteBuffer buffer = ByteBuffer.allocate(1024 * 1000); //1GB buffer
+                String line = "";
+                int indGen = 0;
+                int indGen2 = 0;
+                int indHid = 0;
+                int indEta = 0;
+                float Pgen = 0;
+                float ENS = 0;
+                while (inChannel.read(buffer) > 0) {
+                    buffer.flip();
+                    for (int i = 0; i < buffer.limit(); i++) {
+                        boolean isEOL = false;
+                        char c = ((char) buffer.get());
+                        if (c == '\r' || c == '\n') {
+                            isEOL = true;
+                        } else {
+                            line += c;
+                        }
+                        if (isEOL) {
+                            //Procesar linea:
+                            if (cuenta > 0) {
+                                if ((line.substring(0, 5).trim()).equals("MEDIA") == false) {
+                                    indGen = Calc.Buscar((line.substring(32, line.indexOf(",", 32))).trim(), nomGen);
+                                    indGen2 = Calc.Buscar((line.substring(32, line.indexOf(",", 32))).trim(), nomGen_Sin_Fallas);
+                                    if (indGen2 > -1) {
+                                        if (indGen > -1) {
+                                            indHid = Integer.valueOf((line.substring(4, line.indexOf(",", 4))).trim()) - 1;
+                                            indEta = Integer.valueOf((line.substring(9, line.indexOf(",", 9))).trim()) - 1;
+                                            Pgen = Float.valueOf((line.substring(153, line.indexOf(",", 153))).trim());
+                                            if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
+                                                Gx[indGen][indEta - etapaPeriodoIni][indHid] = Pgen; //TODO: This can cause an java.lang.ArrayIndexOutOfBoundsException when the selected hydro is lower than the values in plp file!
+                                            }
+                                        }
+                                    } else {//suma las fallas
+                                        indHid = Integer.valueOf((line.substring(4, line.indexOf(",", 4))).trim()) - 1;
+                                        indEta = Integer.valueOf((line.substring(9, line.indexOf(",", 9))).trim()) - 1;
+                                        ENS = Float.valueOf((line.substring(153, line.indexOf(",", 153))).trim());
+                                        if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
+                                            FallaEtaHid[indEta - etapaPeriodoIni][indHid] += ENS; //TODO: This can cause an java.lang.ArrayIndexOutOfBoundsException when the selected hydro is lower than the values in plp file!
+                                        }
+                                    }
+                                }
+                            }
+                            line = "";
+                            cuenta++;
+                        }
+                    }
+                    buffer.clear();
+                }
+                inChannel.close();
+                aFile.close();
+            }
+
+            if (USE_SCANNER) {
+                RandomAccessFile aFile = new RandomAccessFile(ArchivoDespachoGeneradores, "r");
+                FileChannel inChannel = aFile.getChannel();
+                Scanner fileScanner = new Scanner(inChannel, sEncodingPLP);
+    //            Scanner fileScanner = new Scanner(new BufferedReader(new InputStreamReader(new FileInputStream(ArchivoDespachoGeneradores), StandardCharsets.ISO_8859_1.name())));
+                String line = "";
+                int indGen = 0;
+                int indGen2 = 0;
+                int indHid = 0;
+                int indEta = 0;
+                float Pgen = 0;
+                float ENS = 0;
+                while (fileScanner.hasNextLine()) {
+                    line = fileScanner.nextLine();
+                    if (cuenta > 0) {
+                        if ((line.substring(0, 5).trim()).equals("MEDIA") == false) {
+                            indGen = Calc.Buscar((line.substring(32, line.indexOf(",", 32))).trim(), nomGen);
+                            indGen2 = Calc.Buscar((line.substring(32, line.indexOf(",", 32))).trim(), nomGen_Sin_Fallas);
+                            if (indGen2 > -1) {
+                                if (indGen > -1) {
+                                    indHid = Integer.valueOf((line.substring(4, line.indexOf(",", 4))).trim()) - 1;
+                                    indEta = Integer.valueOf((line.substring(9, line.indexOf(",", 9))).trim()) - 1;
+                                    Pgen = Float.valueOf((line.substring(153, line.indexOf(",", 153))).trim());
+                                    if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
+                                        Gx[indGen][indEta - etapaPeriodoIni][indHid] = Pgen; //TODO: This can cause an java.lang.ArrayIndexOutOfBoundsException when the selected hydro is lower than the values in plp file!
+                                    }
+                                }
+                            } else {//suma las fallas
+                                indHid = Integer.valueOf((line.substring(4, line.indexOf(",", 4))).trim()) - 1;
+                                indEta = Integer.valueOf((line.substring(9, line.indexOf(",", 9))).trim()) - 1;
+                                ENS = Float.valueOf((line.substring(153, line.indexOf(",", 153))).trim());
+                                if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
+                                    FallaEtaHid[indEta - etapaPeriodoIni][indHid] += ENS; //TODO: This can cause an java.lang.ArrayIndexOutOfBoundsException when the selected hydro is lower than the values in plp file!
                                 }
                             }
                         }
                     }
                     cuenta++;
                 }
-            } catch (java.io.UnsupportedEncodingException ex) {
-                throw new IOException("Encoding invalido '" + sEncodingPLP + "' archivo despachos plp. Detalles: '" + ex.getMessage() +"'", ex);
-            } catch (NumberFormatException e) {
-                throw new IOException("No fue posible convertir valor en linea '" + cuenta + "' archivo plp '" + ArchivoDespachoGeneradores +"'", e);
-            } finally {
-                try {
-                    if (input != null) {
-                        input.close();
-                    }
-                } catch (IOException ex) {
-                    ex.printStackTrace(System.out);
-                }
-            }
-            numHidCenPLP++;
-            if (numHidCenPLP > numHid) {
-                throw new IOException("WARNING: Se encontraron " + numHidCenPLP + " hidrologias en archivo despachos PLP pero solo se leyeron " + numHid + ". Los resultados pueden ser imprecisos");
-            } else if (numHidCenPLP < numHid) {
-                throw new IOException("WARNING: Solo se encontraron " + numHidCenPLP + " hidrologias en archivo despachos PLP y se esperaban " + numHid + ". Los resultados pueden ser imprecisos");
-            }
-        }
-
-        if (USE_FILECHANNEL) {
-            RandomAccessFile aFile = new RandomAccessFile(ArchivoDespachoGeneradores, "r");
-            FileChannel inChannel = aFile.getChannel();
-            ByteBuffer buffer = ByteBuffer.allocate(1024 * 1000); //1GB buffer
-            String line = "";
-            int indGen = 0;
-            int indGen2 = 0;
-            int indHid = 0;
-            int indEta = 0;
-            float Pgen = 0;
-            float ENS = 0;
-            while (inChannel.read(buffer) > 0) {
-                buffer.flip();
-                for (int i = 0; i < buffer.limit(); i++) {
-                    boolean isEOL = false;
-                    char c = ((char) buffer.get());
-                    if (c == '\r' || c == '\n') {
-                        isEOL = true;
-                    } else {
-                        line += c;
-                    }
-                    if (isEOL) {
-                        //Procesar linea:
-                        if (cuenta > 0) {
-                            if ((line.substring(0, 5).trim()).equals("MEDIA") == false) {
-                                indGen = Calc.Buscar((line.substring(32, line.indexOf(",", 32))).trim(), nomGen);
-                                indGen2 = Calc.Buscar((line.substring(32, line.indexOf(",", 32))).trim(), nomGen_Sin_Fallas);
-                                if (indGen2 > -1) {
-                                    if (indGen > -1) {
-                                        indHid = Integer.valueOf((line.substring(4, line.indexOf(",", 4))).trim()) - 1;
-                                        indEta = Integer.valueOf((line.substring(9, line.indexOf(",", 9))).trim()) - 1;
-                                        Pgen = Float.valueOf((line.substring(153, line.indexOf(",", 153))).trim());
-                                        if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
-                                            Gx[indGen][indEta - etapaPeriodoIni][indHid] = Pgen; //TODO: This can cause an java.lang.ArrayIndexOutOfBoundsException when the selected hydro is lower than the values in plp file!
-                                        }
-                                    }
-                                } else {//suma las fallas
-                                    indHid = Integer.valueOf((line.substring(4, line.indexOf(",", 4))).trim()) - 1;
-                                    indEta = Integer.valueOf((line.substring(9, line.indexOf(",", 9))).trim()) - 1;
-                                    ENS = Float.valueOf((line.substring(153, line.indexOf(",", 153))).trim());
-                                    if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
-                                        FallaEtaHid[indEta - etapaPeriodoIni][indHid] += ENS; //TODO: This can cause an java.lang.ArrayIndexOutOfBoundsException when the selected hydro is lower than the values in plp file!
-                                    }
-                                }
-                            }
-                        }
-                        line = "";
-                        cuenta++;
-                    }
-                }
-                buffer.clear();
-            }
-            inChannel.close();
-            aFile.close();
-        }
-        
-        if (USE_SCANNER) {
-            RandomAccessFile aFile = new RandomAccessFile(ArchivoDespachoGeneradores, "r");
-            FileChannel inChannel = aFile.getChannel();
-            Scanner fileScanner = new Scanner(inChannel, sEncodingPLP);
-//            Scanner fileScanner = new Scanner(new BufferedReader(new InputStreamReader(new FileInputStream(ArchivoDespachoGeneradores), StandardCharsets.ISO_8859_1.name())));
-            String line = "";
-            int indGen = 0;
-            int indGen2 = 0;
-            int indHid = 0;
-            int indEta = 0;
-            float Pgen = 0;
-            float ENS = 0;
-            while (fileScanner.hasNextLine()) {
-                line = fileScanner.nextLine();
-                if (cuenta > 0) {
-                    if ((line.substring(0, 5).trim()).equals("MEDIA") == false) {
-                        indGen = Calc.Buscar((line.substring(32, line.indexOf(",", 32))).trim(), nomGen);
-                        indGen2 = Calc.Buscar((line.substring(32, line.indexOf(",", 32))).trim(), nomGen_Sin_Fallas);
-                        if (indGen2 > -1) {
-                            if (indGen > -1) {
-                                indHid = Integer.valueOf((line.substring(4, line.indexOf(",", 4))).trim()) - 1;
-                                indEta = Integer.valueOf((line.substring(9, line.indexOf(",", 9))).trim()) - 1;
-                                Pgen = Float.valueOf((line.substring(153, line.indexOf(",", 153))).trim());
-                                if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
-                                    Gx[indGen][indEta - etapaPeriodoIni][indHid] = Pgen; //TODO: This can cause an java.lang.ArrayIndexOutOfBoundsException when the selected hydro is lower than the values in plp file!
-                                }
-                            }
-                        } else {//suma las fallas
-                            indHid = Integer.valueOf((line.substring(4, line.indexOf(",", 4))).trim()) - 1;
-                            indEta = Integer.valueOf((line.substring(9, line.indexOf(",", 9))).trim()) - 1;
-                            ENS = Float.valueOf((line.substring(153, line.indexOf(",", 153))).trim());
-                            if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
-                                FallaEtaHid[indEta - etapaPeriodoIni][indHid] += ENS; //TODO: This can cause an java.lang.ArrayIndexOutOfBoundsException when the selected hydro is lower than the values in plp file!
-                            }
-                        }
-                    }
-                }
-                cuenta++;
             }
         }
         
@@ -732,7 +783,7 @@ public class Prorratas {
         input = null;
         perdidasPLPMayor110 = new float[numEtapas][numHid];
         java.util.Map<String, Integer> m_nombreLineasSistRed = new java.util.TreeMap<String, Integer>();
-        if (USE_MAPPED_NAMES) {
+        if (USE_MAPPED_NAMES || USE_JAVA_SPLIT_SEPARATOR) {
             int cont = 0;
             for (String l: nombreLineasSistRed) {
                 m_nombreLineasSistRed.put(l, cont);
@@ -751,7 +802,40 @@ public class Prorratas {
             Integer indexLin = null;
             while (( line = input.readLine()) != null){
                 if(cuenta>0){
-                    if (USE_MAPPED_NAMES) {
+                    if(USE_JAVA_SPLIT_SEPARATOR){
+                        String[] lineItems = line.split(",");
+                        String sHydro = lineItems[0];
+                        String sEtapa = lineItems[1];
+                        String sLinNom = lineItems[4];
+                        String sLinPerP = lineItems[11];
+                        if(sHydro.trim().equals("MEDIA")==false){
+                            if(sHydro.contains("Sim")){
+                                sHydro = sHydro.replace("Sim", "");
+                            }
+                            String sNomLineaActual = sLinNom.trim();
+                            if (!sNomLineaActual.equals(sNomLineaPrev)) {
+                                indexLin = m_nombreLineasSistRed.get(sNomLineaActual);
+                                sNomLineaPrev = sNomLineaActual;
+                            }
+                            if (indexLin != null) {
+                                if (paramLinSistRed[indexLin] > 110) {
+                                    indHid = Integer.valueOf(sHydro.trim());
+                                    if (indHid > numHidLinPLP) {
+                                        numHidLinPLP = indHid;
+                                    }
+                                    if (indHid + 1 > numHid) {
+                                        cuenta++;
+                                        continue;
+                                    }
+                                    indEta = Integer.valueOf(sEtapa.trim());
+                                    if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
+                                        Perd = Float.valueOf(sLinPerP.trim());
+                                        perdidasPLPMayor110[indEta - etapaPeriodoIni][indHid] += Perd;
+                                    }
+                                }
+                            }
+                        }
+                    }else if (USE_MAPPED_NAMES) {
                         if ((line.substring(0, 5).trim()).equals("MEDIA") == false && (line.substring(0, 3).trim()).equals("Sim") == true) {
                             String sNomLineaActual = (line.substring(33, 81)).trim();
                             if (!sNomLineaActual.equals(sNomLineaPrev)) {
@@ -815,7 +899,7 @@ public class Prorratas {
                 ex.printStackTrace(System.out);
             }
         }
-        numHidLinPLP++;
+//        numHidLinPLP++; por que se aumenta nuevamente?
         if (numHidLinPLP > numHid) {
             throw new IOException("WARNING: Se encontraron " + numHidLinPLP + " hidrologias en archivo flujos lineas PLP pero solo se leyeron " + numHid);
         } else if (numHidLinPLP < numHid) {
@@ -1869,6 +1953,41 @@ public class Prorratas {
     public static boolean terminado(){
             return completo;
     }
+    
+    /**
+     * Permite definir constante de lectura de archivos de plp
+     * @param usePLPFiles utilizar archivos de plp
+     */
+    public static void setPLPFilesOption(boolean usePLPFiles){
+        USE_PLEXOS_API = !usePLPFiles;
+        USE_PLP_FILES = usePLPFiles;
+    }
+    
+    /**
+     * Entrega valor de constante para uso de archivos de plp
+     * @return constante para lectura de archivos de plp
+     */
+    public static boolean getPLPFilesOption(){
+        return USE_PLP_FILES;
+    }
+    
+    /**
+     * Define si se utiliza el API de Plexos para lectura de archivos
+     * @param usePlexosAPI si utiliza API de Plexos
+     */
+    public static void setPlexosAPIOption(boolean usePlexosAPI){
+        USE_PLEXOS_API = usePlexosAPI;
+        USE_PLP_FILES = !usePlexosAPI;
+    }
+    
+    /**
+     * Entrega valor de constante para uso de api de plexos para lectura de archivos
+     * @return uso de API Plexos
+     */
+    public static boolean getPlexosAPIOption(){
+        return USE_PLEXOS_API;
+    }
+    
     
     @Deprecated
     public static void Comenzar(final File DirIn, final File DirOut, final int AnoAEvaluar, final int tipoCalculo, final int AnoBase,
