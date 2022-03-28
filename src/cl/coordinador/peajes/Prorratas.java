@@ -62,7 +62,7 @@ public class Prorratas {
     private static final boolean USE_BUFFEREDSTREAM = true;
     private static final boolean USE_FILECHANNEL = false;
     private static final boolean USE_SCANNER = false;
-    private static final boolean USE_MAPPED_NAMES = true;
+    private static final boolean USE_MAPPED_NAMES = false;
     private static final boolean USE_CONSUMO_CLIENTES_CLAVE = false;
     private static final boolean USE_FACTORY = false; //Temp switch for the thread factory
     private static final boolean USE_MEMORY_READER = true; //switch para usar nuevo API lectura poi
@@ -309,9 +309,9 @@ public class Prorratas {
         TxtTemp1 = new String[maxLeeGEN];
         float[] Temp1 = new float[maxLeeGEN];
         float[] Temp2= new float[maxLeeGEN];
-        float[] Temp3= new float[maxLeeGEN];
-        float[] Temp4= new float[maxLeeGEN];
-        float[] Temp5= new float[maxLeeGEN];
+        float[] Temp3= new float[maxLeeGEN];//faer
+        float[] Temp4= new float[maxLeeGEN];//cet
+        float[] Temp5= new float[maxLeeGEN];//tabla1
         int numCen = Lee.leeCentrales(wb_Ent, TxtTemp1,Temp1,Temp2,Temp3,Temp4,Temp5);
         String[] nombreCentrales = new String[numCen];
         System.arraycopy(TxtTemp1, 0, nombreCentrales, 0, numCen);
@@ -587,7 +587,7 @@ public class Prorratas {
                                             FallaEtaHid[indEta - etapaPeriodoIni][indHid] += ENS; //TODO: This can cause an java.lang.ArrayIndexOutOfBoundsException when the selected hydro is lower than the values in plp file!
                                         }
                                     }
-                                } else {
+                                } else if (USE_JAVA_SPLIT_SEPARATOR==false && USE_MAPPED_NAMES==false ) {
                                     indGen = Calc.Buscar((line.substring(32, line.indexOf(",", 32))).trim(), nomGen);
                                     indGen2 = Calc.Buscar((line.substring(32, line.indexOf(",", 32))).trim(), nomGen_Sin_Fallas);
 
@@ -835,7 +835,7 @@ public class Prorratas {
                                 }
                             }
                         }
-                    }else if (USE_MAPPED_NAMES) {
+                    }if (USE_MAPPED_NAMES) {
                         if ((line.substring(0, 5).trim()).equals("MEDIA") == false && (line.substring(0, 3).trim()).equals("Sim") == true) {
                             String sNomLineaActual = (line.substring(33, 81)).trim();
                             if (!sNomLineaActual.equals(sNomLineaPrev)) {
@@ -860,7 +860,7 @@ public class Prorratas {
                                 }
                             }
                         }
-                    } else {
+                    } else if(USE_MAPPED_NAMES==false && USE_JAVA_SPLIT_SEPARATOR==false){
                     if((line.substring(0,5).trim()).equals("MEDIA")==false && (line.substring(0,3).trim()).equals("Sim")==true){
                         indLin=Calc.Buscar((line.substring(33,81)).trim(),nombreLineasSistRed);
                         if(indLin>-1){
