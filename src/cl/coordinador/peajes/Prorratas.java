@@ -68,7 +68,7 @@ public class Prorratas {
     private static final boolean USE_MEMORY_READER = true; //switch para usar nuevo API lectura poi
     private static final boolean USE_MEMORY_WRITER = true; //switch para usar nuevo API escritura poi
     private static final boolean USE_JAVA_SPLIT_SEPARATOR = true; //switch para usar string.split para separar caracteres
-    private static boolean USE_PLEXOS_API = true; //switch para utilizar api de plexos para lectura de archivo de generacion (plpcen)
+    private static boolean USE_PLEXOS_API = false; //switch para utilizar api de plexos para lectura de archivo de generacion (plpcen)
     private static boolean USE_PLP_FILES = true; //switch para utilizar archivos de plp de entrada
     
     private static int etapa;
@@ -534,8 +534,9 @@ public class Prorratas {
                                         indexGenSinFallas = m_nomGen_Sin_Fallas.get(sNomGenActual);
                                         sNomGenPrev = sNomGenActual;
                                     }
-                                    indHid = Integer.valueOf(sHydro.trim());
-                                    indEta = Integer.valueOf(sEtapa.trim());
+                                    sHydro = sHydro.replace("Sim", "");
+                                    indHid = Integer.valueOf(sHydro.trim())-1;
+                                    indEta = Integer.valueOf(sEtapa.trim())-1;
                                     if (indHid > numHidCenPLP) {
                                         numHidCenPLP = indHid;
                                     }
@@ -647,7 +648,7 @@ public class Prorratas {
                         ex.printStackTrace(System.out);
                     }
                 }
-//                numHidCenPLP++; //por que se aumenta nuevamente?
+                numHidCenPLP++; //por que se aumenta nuevamente?
                 if (numHidCenPLP > numHid) {
                     throw new IOException("WARNING: Se encontraron " + numHidCenPLP + " hidrologias en archivo despachos PLP pero solo se leyeron " + numHid + ". Los resultados pueden ser imprecisos");
                 } else if (numHidCenPLP < numHid) {
@@ -819,7 +820,7 @@ public class Prorratas {
                             }
                             if (indexLin != null) {
                                 if (paramLinSistRed[indexLin] > 110) {
-                                    indHid = Integer.valueOf(sHydro.trim());
+                                    indHid = Integer.valueOf(sHydro.trim())-1;
                                     if (indHid > numHidLinPLP) {
                                         numHidLinPLP = indHid;
                                     }
@@ -827,7 +828,7 @@ public class Prorratas {
                                         cuenta++;
                                         continue;
                                     }
-                                    indEta = Integer.valueOf(sEtapa.trim());
+                                    indEta = Integer.valueOf(sEtapa.trim())-1;
                                     if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
                                         Perd = Float.valueOf(sLinPerP.trim());
                                         perdidasPLPMayor110[indEta - etapaPeriodoIni][indHid] += Perd;
@@ -899,7 +900,7 @@ public class Prorratas {
                 ex.printStackTrace(System.out);
             }
         }
-//        numHidLinPLP++; por que se aumenta nuevamente?
+        numHidLinPLP++; //por que se aumenta nuevamente?
         if (numHidLinPLP > numHid) {
             throw new IOException("WARNING: Se encontraron " + numHidLinPLP + " hidrologias en archivo flujos lineas PLP pero solo se leyeron " + numHid);
         } else if (numHidLinPLP < numHid) {
