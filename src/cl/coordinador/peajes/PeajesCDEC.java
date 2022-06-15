@@ -112,6 +112,7 @@ public class PeajesCDEC extends javax.swing.JFrame {
         txtFechaPago = new javax.swing.JTextField();
         btnCalcularPeaje = new javax.swing.JButton();
         ActClientes = new javax.swing.JCheckBox();
+        btnCalcularTodo = new javax.swing.JButton();
         jPanel5 = new javax.swing.JPanel();
         jSplitPane4 = new javax.swing.JSplitPane();
         jLabel8 = new javax.swing.JLabel();
@@ -485,37 +486,51 @@ public class PeajesCDEC extends javax.swing.JFrame {
         ActClientes.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
         ActClientes.setText("Actualizar Clientes");
 
+        btnCalcularTodo.setFont(new java.awt.Font("Tahoma", 0, 9)); // NOI18N
+        btnCalcularTodo.setText("Calcular Todo");
+        btnCalcularTodo.setMaximumSize(new java.awt.Dimension(94, 17));
+        btnCalcularTodo.setMinimumSize(new java.awt.Dimension(94, 17));
+        btnCalcularTodo.setPreferredSize(new java.awt.Dimension(94, 17));
+        btnCalcularTodo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCalcularTodoActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
             jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel7Layout.createSequentialGroup()
+            .add(jPanel7Layout.createSequentialGroup()
                 .add(28, 28, 28)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                        .add(jPanel7Layout.createSequentialGroup()
-                            .add(lblMesLiquida)
-                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                            .add(Mes, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 63, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .add(jPanel7Layout.createSequentialGroup()
-                            .add(lblFechaPago)
-                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                            .add(txtFechaPago)))
-                    .add(ActClientes, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 131, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .add(100, 100, 100)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(btnPagoInyAnual, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 131, Short.MAX_VALUE)
-                    .add(btnCalcularProrrAnual, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel7Layout.createSequentialGroup()
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(btnCuadroAnual, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 127, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel7Layout.createSequentialGroup()
-                        .add(11, 11, 11)
-                        .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                            .add(btnCalcularPeaje, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 126, Short.MAX_VALUE)
-                            .add(btnPagoRetAnual, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .add(30, 30, 30))
+                        .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                            .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                                .add(jPanel7Layout.createSequentialGroup()
+                                    .add(lblMesLiquida)
+                                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                    .add(Mes, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 63, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                                .add(jPanel7Layout.createSequentialGroup()
+                                    .add(lblFechaPago)
+                                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                    .add(txtFechaPago)))
+                            .add(ActClientes, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 131, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(100, 100, 100)
+                        .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                            .add(jPanel7Layout.createSequentialGroup()
+                                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                                    .add(btnPagoInyAnual, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 131, Short.MAX_VALUE)
+                                    .add(btnCalcularProrrAnual, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(btnCuadroAnual, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 127, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                            .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                                .add(btnCalcularPeaje, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 126, Short.MAX_VALUE)
+                                .add(btnPagoRetAnual, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .add(30, 30, 30))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel7Layout.createSequentialGroup()
+                        .add(btnCalcularTodo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 127, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(107, 107, 107))))
         );
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -545,7 +560,8 @@ public class PeajesCDEC extends javax.swing.JFrame {
                         .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                             .add(lblFechaPago)
                             .add(txtFechaPago, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(btnCalcularTodo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
 
         org.jdesktop.layout.GroupLayout jPanel4Layout = new org.jdesktop.layout.GroupLayout(jPanel4);
@@ -585,7 +601,7 @@ public class PeajesCDEC extends javax.swing.JFrame {
                     .add(jLabel9)
                     .add(progreso, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(etiquetaTiempo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(16, Short.MAX_VALUE))
+                .addContainerGap(8, Short.MAX_VALUE))
         );
 
         jPanel5.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -947,7 +963,7 @@ public class PeajesCDEC extends javax.swing.JFrame {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 150, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 165, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(pnlReliquidacion, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 157, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1081,6 +1097,18 @@ public class PeajesCDEC extends javax.swing.JFrame {
         // TODO add your handling code here:
         this.txtAreaPrintMensajes.setText(null);
     }//GEN-LAST:event_btnClearTxtAreaPrintMensajesActionPerformed
+
+    private void btnCalcularTodoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCalcularTodoActionPerformed
+        System.out.println("============= Iniciando calculo de peajes...=============");
+        this.btnCalcularPeajecalcular(evt);
+        calcularProrratas();
+        while(!Prorratas.terminado()){
+        }
+        this.btnPagoRetAnualActionPerformed(evt);
+        this.btnPagoInyAnualActionPerformed(evt);
+        this.btnCuadroAnualActionPerformed(evt);
+        System.out.println("============= Calculo de peajes terminado...=============");
+    }//GEN-LAST:event_btnCalcularTodoActionPerformed
 
     public static void main(String args[]) {
                
@@ -1259,6 +1287,7 @@ public class PeajesCDEC extends javax.swing.JFrame {
     private javax.swing.JButton botonEscReliq;
     private javax.swing.JButton btnCalcularPeaje;
     private javax.swing.JButton btnCalcularProrrAnual;
+    private javax.swing.JButton btnCalcularTodo;
     private javax.swing.JButton btnClearTxtAreaPrintMensajes;
     private javax.swing.JButton btnCuadroAnual;
     private javax.swing.ButtonGroup btnHorizonteLiquida;
@@ -1423,7 +1452,7 @@ public class PeajesCDEC extends javax.swing.JFrame {
 ////        }
 //        tInicio=System.currentTimeMillis();
 //    }
-    
+ 
     private void calcularProrratas () {
         
         File f_DirectorioEntrada = new File(getSelectedDirectorioEntrada());
