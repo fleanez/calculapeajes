@@ -561,7 +561,7 @@ public class PeajesCDEC extends javax.swing.JFrame {
                             .add(lblFechaPago)
                             .add(txtFechaPago, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(btnCalcularTodo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(btnCalcularTodo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
 
         org.jdesktop.layout.GroupLayout jPanel4Layout = new org.jdesktop.layout.GroupLayout(jPanel4);
@@ -975,10 +975,51 @@ public class PeajesCDEC extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void calcular(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_calcular
-//        calcular();
-        calcularProrratas();
+         //Calcula un rango de años
+        int offsetInicial = Integer.parseInt(cuadroSeleccionOffset.getText());
+        if(this.chkboxUsarRangoDeAnos.isSelected()){
+            int anoInicial = Integer.parseInt(this.cuadroAnoInicialRangoAEvaluar.getSelectedItem().toString());
+            int anoFinal = Integer.parseInt(this.cuadroAnoFinalRangoAEvaluar.getSelectedItem().toString());
+            int cnt = 0;
+            for (int year = anoInicial; year <= anoFinal; year++) {                
+                cuadroAnoAEvaluar.setSelectedItem(year);
+                cuadroSeleccionAgnoBase.setSelectedIndex(0);
+                int offsetNuevo = offsetInicial*(1+cnt);
+                String soffsetNuevo = String.valueOf(offsetNuevo);
+                cuadroSeleccionOffset.setText(soffsetNuevo);
+                calcularProrratasNotBackground(year);
+                cnt++;
+            }
+        }
+        //Calcula un solo año
+        else{
+            calcularProrratas();
+        }
+        
 }//GEN-LAST:event_calcular
 
+    private void calcularProrratasAlternate(){
+        int offsetInicial = Integer.parseInt(cuadroSeleccionOffset.getText());
+        if(this.chkboxUsarRangoDeAnos.isSelected()){
+            int anoInicial = Integer.parseInt(this.cuadroAnoInicialRangoAEvaluar.getSelectedItem().toString());
+            int anoFinal = Integer.parseInt(this.cuadroAnoFinalRangoAEvaluar.getSelectedItem().toString());
+            int cnt = 0;
+            for (int year = anoInicial; year <= anoFinal; year++) {                
+                cuadroAnoAEvaluar.setSelectedItem(year);
+                cuadroSeleccionAgnoBase.setSelectedIndex(0);
+                int offsetNuevo = offsetInicial*(1+cnt);
+                String soffsetNuevo = String.valueOf(offsetNuevo);
+                cuadroSeleccionOffset.setText(soffsetNuevo);
+                calcularProrratasNotBackground(year);
+                cnt++;
+            }
+        }
+        //Calcula un solo año
+        else{
+            calcularProrratasNotBackground();
+        }
+    }
+    
     private void abrirDirectorioEnt(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_abrirDirectorioEnt
         abrirDirectorioEntAccion();
 }//GEN-LAST:event_abrirDirectorioEnt
@@ -996,11 +1037,33 @@ public class PeajesCDEC extends javax.swing.JFrame {
     }//GEN-LAST:event_cuadroSeleccionAgnoBaseAccion
 
     private void btnPagoInyAnualActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPagoInyAnualActionPerformed
-        calcularPeajesIny();
+        //Calcula un rango de años
+        if(this.chkboxUsarRangoDeAnos.isSelected()){
+            int anoInicial = Integer.parseInt(this.cuadroAnoInicialRangoAEvaluar.getSelectedItem().toString());
+            int anoFinal = Integer.parseInt(this.cuadroAnoFinalRangoAEvaluar.getSelectedItem().toString());
+            for (int year = anoInicial; year <= anoFinal; year++) {
+                calcularPeajesIny(year);
+            }
+        }
+        //Calcula un solo año
+        else{
+            calcularPeajesIny();
+        }
     }//GEN-LAST:event_btnPagoInyAnualActionPerformed
-
+    
     private void btnPagoRetAnualActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPagoRetAnualActionPerformed
-        calcularPeajesRet();
+        //Calcula un rango de años
+        if(this.chkboxUsarRangoDeAnos.isSelected()){
+            int anoInicial = Integer.parseInt(this.cuadroAnoInicialRangoAEvaluar.getSelectedItem().toString());
+            int anoFinal = Integer.parseInt(this.cuadroAnoFinalRangoAEvaluar.getSelectedItem().toString());
+            for (int year = anoInicial; year <= anoFinal; year++) {
+                calcularPeajesRet(year);
+            }
+        }
+        //Calcula un solo año
+        else{
+            calcularPeajesRet();
+        }
     }//GEN-LAST:event_btnPagoRetAnualActionPerformed
 
     private void btnCalcularPeajecalcular(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCalcularPeajecalcular
@@ -1029,8 +1092,17 @@ public class PeajesCDEC extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCalcularPeajecalcular
 
     private void btnCuadroAnualActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCuadroAnualActionPerformed
-//        EscribeLiquiAno();
-        escribeCuadroResumen();
+        if(this.chkboxUsarRangoDeAnos.isSelected()){
+            int anoInicial = Integer.parseInt(this.cuadroAnoInicialRangoAEvaluar.getSelectedItem().toString());
+            int anoFinal = Integer.parseInt(this.cuadroAnoFinalRangoAEvaluar.getSelectedItem().toString());
+            for (int year = anoInicial; year <= anoFinal; year++) {
+                escribeCuadroResumen(year);
+            }
+        }
+        //Calcula un solo año
+        else{
+            escribeCuadroResumen();
+        }
     }//GEN-LAST:event_btnCuadroAnualActionPerformed
 
     private void botonDirectorioLiqabrirDirectorioEnt(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonDirectorioLiqabrirDirectorioEnt
@@ -1101,9 +1173,8 @@ public class PeajesCDEC extends javax.swing.JFrame {
     private void btnCalcularTodoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCalcularTodoActionPerformed
         System.out.println("============= Iniciando calculo de peajes...=============");
         this.btnCalcularPeajecalcular(evt);
-        calcularProrratas();
-        while(!Prorratas.terminado()){
-        }
+        calcularProrratasAlternate();
+        System.out.println("Calculo de prorratas terminado");
         this.btnPagoRetAnualActionPerformed(evt);
         this.btnPagoInyAnualActionPerformed(evt);
         this.btnCuadroAnualActionPerformed(evt);
@@ -1453,6 +1524,49 @@ public class PeajesCDEC extends javax.swing.JFrame {
 //        tInicio=System.currentTimeMillis();
 //    }
  
+    private void calcularProrratasNotBackground () {
+        
+        File f_DirectorioEntrada = new File(getSelectedDirectorioEntrada());
+        File f_DirectorioSalida = new File(getSelectedDirectorioSalida());
+        int nAnoAEvaluar = getSelectedAnoAEvaluar();
+        int nAnoBase = getSelectedAnoBase();
+        int nHidro = getSelectedHidrologia();
+        int numEtapasAno = Integer.parseInt(cuadroSeleccionNEtapas.getText());
+        int nMesAEvaluar = getSelectedMes();
+        int offset = Integer.parseInt(cuadroSeleccionOffset.getText());
+        int numSlack = Integer.parseInt(cuadroSeleccionSlack.getText());
+        boolean clientes = (ActClientes.isEnabled() && ActClientes.isSelected());
+        PeajesConstant.HorizonteCalculo horizon = getSelectedHorizon();
+        timer.start();
+        tInicio=System.currentTimeMillis();
+        if (continueToProrrata ()) {
+            Prorratas.setPlexosAPIOption(bUsePlexosAPI);
+            Prorratas.calcularNotBackground(horizon, f_DirectorioEntrada, f_DirectorioSalida, nAnoAEvaluar, nMesAEvaluar, nAnoBase, nHidro, numEtapasAno, numSlack, offset, clientes);
+        }
+        
+    }
+    
+    private void calcularProrratasNotBackground (int year) {
+        
+        File f_DirectorioEntrada = new File(getSelectedDirectorioEntrada());
+        File f_DirectorioSalida = new File(getSelectedDirectorioSalida());
+        int nAnoBase = getSelectedAnoBase();
+        int nHidro = getSelectedHidrologia();
+        int numEtapasAno = Integer.parseInt(cuadroSeleccionNEtapas.getText());
+        int nMesAEvaluar = getSelectedMes();
+        int offset = Integer.parseInt(cuadroSeleccionOffset.getText());
+        int numSlack = Integer.parseInt(cuadroSeleccionSlack.getText());
+        boolean clientes = (ActClientes.isEnabled() && ActClientes.isSelected());
+        PeajesConstant.HorizonteCalculo horizon = getSelectedHorizon();
+        timer.start();
+        tInicio=System.currentTimeMillis();
+        if (continueToProrrata ()) {
+            Prorratas.setPlexosAPIOption(bUsePlexosAPI);
+            Prorratas.calcularNotBackground(horizon, f_DirectorioEntrada, f_DirectorioSalida, year, nMesAEvaluar, nAnoBase, nHidro, numEtapasAno, numSlack, offset, clientes);
+        }
+        
+    }
+    
     private void calcularProrratas () {
         
         File f_DirectorioEntrada = new File(getSelectedDirectorioEntrada());
@@ -1512,6 +1626,17 @@ public class PeajesCDEC extends javax.swing.JFrame {
         }
     }
     
+    private void calcularPeajesIny(int agnoAEvaluar) {
+        boolean bLiquidacionReliquidacion = cuadroSeleccionTipoCalculo.getSelectedIndex() == 0;
+        File f_DirectorioEntrada = new File(getSelectedDirectorioEntrada());
+        File f_DirectorioSalida = new File(getSelectedDirectorioSalida());
+        int nMes = Mes.getSelectedIndex();
+        PeajesConstant.HorizonteCalculo horizon = getSelectedHorizon();
+        if (continueToPagosInyRet()) {
+            PeajesIny.calculaPeajesIny(horizon, f_DirectorioEntrada, f_DirectorioSalida, agnoAEvaluar, nMes, bLiquidacionReliquidacion);
+        }
+    }
+    
 //    private void CalculaLiquiMesIny() {
 //        int anoBase;
 //        if (tipoCalcSeleccionado==0) {
@@ -1545,6 +1670,17 @@ public class PeajesCDEC extends javax.swing.JFrame {
         PeajesConstant.HorizonteCalculo horizon = getSelectedHorizon();
         if (continueToPagosInyRet()) {
             PeajesRet.calculaPeajesRet(horizon, f_DirectorioEntrada, f_DirectorioSalida, getSelectedAnoAEvaluar(), nMes, bLiquidacionReliquidacion);
+        }
+    }
+    
+    private void calcularPeajesRet(int agnoAEvaluar) {
+        boolean bLiquidacionReliquidacion = cuadroSeleccionTipoCalculo.getSelectedIndex() == 0;
+        File f_DirectorioEntrada = new File(getSelectedDirectorioEntrada());
+        File f_DirectorioSalida = new File(getSelectedDirectorioSalida());
+        int nMes = Mes.getSelectedIndex();
+        PeajesConstant.HorizonteCalculo horizon = getSelectedHorizon();
+        if (continueToPagosInyRet()) {
+            PeajesRet.calculaPeajesRet(horizon, f_DirectorioEntrada, f_DirectorioSalida, agnoAEvaluar, nMes, bLiquidacionReliquidacion);
         }
     }
     
@@ -1598,6 +1734,22 @@ public class PeajesCDEC extends javax.swing.JFrame {
                 EscribeArchivosFinales.EscribeLiqAno(Mes.getSelectedItem().toString(), getSelectedAnoAEvaluar(), f_DirectorioSalida);
             } else {
                 EscribeArchivosFinales.EscribeLiqMes(Mes.getSelectedItem().toString(), getSelectedAnoAEvaluar(), f_DirectorioSalida, f_DirectorioEntrada, fechaPago);
+            }
+        }
+        
+    }
+    
+    private void escribeCuadroResumen(int agnoAEvaluar){
+        File f_DirectorioEntrada = new File(getSelectedDirectorioEntrada());
+        File f_DirectorioSalida = new File(getSelectedDirectorioSalida());
+        String fechaPago = (String) txtFechaPago.getText();
+        
+        if (continueToCuadros()) {
+            PeajesConstant.HorizonteCalculo horizon = getSelectedHorizon();
+            if (horizon == PeajesConstant.HorizonteCalculo.Anual) {
+                EscribeArchivosFinales.EscribeLiqAno(Mes.getSelectedItem().toString(), agnoAEvaluar, f_DirectorioSalida);
+            } else {
+                EscribeArchivosFinales.EscribeLiqMes(Mes.getSelectedItem().toString(), agnoAEvaluar, f_DirectorioSalida, f_DirectorioEntrada, fechaPago);
             }
         }
         

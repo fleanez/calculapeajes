@@ -841,7 +841,7 @@
                           </Group>
                       </Group>
                       <EmptySpace type="unrelated" max="32767" attributes="0"/>
-                      <Component id="btnCalcularTodo" min="-2" max="-2" attributes="0"/>
+                      <Component id="btnCalcularTodo" min="-2" pref="17" max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>

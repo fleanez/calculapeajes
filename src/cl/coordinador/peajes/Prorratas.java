@@ -2053,7 +2053,24 @@ public class Prorratas {
         worker.execute();
         
     }
-    
+    //Lazy implementation!!! TODO: Extend swingworker to properly execute Prorratas!
+    public static void calcularNotBackground(final HorizonteCalculo horizonte, final File DirIn, final File DirOut, final int AnoAEvaluar, final int MesAEvaluar, final int AnoBase,
+            final int NumHidro, final int NumEtapasAno, final int NumSlack, final int Offset, final boolean Cli) {
+        try {
+            switch (horizonte) {
+                case Anual:
+                    calculaProrratasAnuales(DirIn, DirOut, AnoAEvaluar, AnoBase, NumHidro, NumEtapasAno, NumSlack, Offset, Cli);
+                    break;
+                case Mensual:
+                    calculaProrratasMensuales(DirIn, DirOut, AnoAEvaluar, MesAEvaluar, AnoBase, NumHidro, NumEtapasAno, NumSlack, Offset, Cli);
+                    break;
+            }
+        } catch (IOException e) {
+            System.out.println(e);
+        } catch (Exception e) {
+            e.printStackTrace(System.out);
+        }
+    }
 }
 
 class ProrratasExe implements Runnable {
