@@ -27,6 +27,6 @@
 <entry key="Maximo numero de CENTRALES leer en planillas Ent::INTEGER">1500</entry>
 <entry key="Maximo numero de CLIENTES leer en planillas Ent::INTEGER">4000</entry>
 <entry key="Maximo numero de ZONAS a leer en planillas Ent::INTEGER">600</entry>
-<entry key="Utilizar API de PLEXOS::BOOLEAN">true</entry>
-<entry key="Ruta completa archivo PLEXOS::STRING">Model PRGMEN_Base Solution.zip</entry>
+<entry key="Utilizar API de PLEXOS::BOOLEAN">false</entry>
+<entry key="Nombre archivo PLEXOS::STRING">Model PRGMEN_Base Solution.zip</entry>
 </properties>
