@@ -1930,6 +1930,39 @@ public class Lee {
         }
         return numLineasSistRed;
     }
+    
+    
+    public static int leeHVDC(String libroEntrada, String[][] Aux) {
+        try {
+            //POIFSFileSystem fs = new //POIFSFileSystem(new FileInputStream( libroEntrada ));
+            XSSFWorkbook wb = new XSSFWorkbook(new FileInputStream(libroEntrada));
+            return leeHVDC(wb, Aux);
+        } catch (java.io.FileNotFoundException e) {
+            System.out.println("No se se puede acceder al archivo " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    
+    public static int leeHVDC(XSSFWorkbook wb, String[][] Aux) {
+        int numLineasSistHVDC = 0;
+        AreaReference aref;
+        CellReference[] crefs;
+        Name nomRango = wb.getName("HVDC");
+        aref = new AreaReference(nomRango.getRefersToFormula(), wb.getSpreadsheetVersion());
+        crefs = aref.getAllReferencedCells();
+        Sheet s = wb.getSheet(crefs[0].getSheetName());
+        for (int i = 0; i < crefs.length; i += 2) {
+            Row r = s.getRow(crefs[i].getRow());
+            Cell c1 = r.getCell(crefs[i].getCol());
+            Cell c2 = r.getCell(crefs[i + 1].getCol());
+            Aux[numLineasSistHVDC][0] = c1.toString().trim(); // Nombre Peaje
+            Aux[numLineasSistHVDC][1] =  c2.toString().trim();// Nombre PLP
+            numLineasSistHVDC++;
+        }
+        return numLineasSistHVDC;
+    }
 
     public static int leeMeses(String libroEntrada, int[] intAux, String[] nombreMeses) {
         try {

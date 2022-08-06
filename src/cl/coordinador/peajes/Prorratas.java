@@ -70,6 +70,7 @@ public class Prorratas {
     private static final boolean USE_JAVA_SPLIT_SEPARATOR = true; //switch para usar string.split para separar caracteres
     private static boolean USE_PLEXOS_API = false; //switch para utilizar api de plexos para lectura de archivo de generacion (plpcen)
     private static boolean USE_PLP_FILES = true; //switch para utilizar archivos de plp de entrada
+    private static String RUTA_ARCHIVO_PLEXOS;
     
     private static int etapa;
     private static int etapaFinalizada;
@@ -120,6 +121,7 @@ public class Prorratas {
         int numGen; //Numero de generadores en planilla centralesPLP (rango 'plpcnfce') de archivo Ent
         int numLin; //Numero de lineas de transmision en archivo Ent
         int numLinTron; //Numero de lineas de transmision troncal en archivo Ent
+        int numLinHVDC; //Numero de lineas HVDC
         int numBarras; //Numero de barras en archivo Ent
         int numHid=NumeroHidrologias; //AnoIni-1962 - Numero de hidrologias a considerar en calculo (definidas por usuario)
         final int offset=ValorOffset;//(AnoIni==2004?0:12);        
@@ -458,7 +460,23 @@ public class Prorratas {
             ConsCliAno[datosClaves[j][2]]+=ConsClaveMes[j][m];
             }
         }
-
+        
+        /*************************
+        Lectura HVDC
+        **************************/
+        try{       
+            String[][] AuxHVDC = new String[maxLeeLINEA][2];
+            numLinHVDC = Lee.leeHVDC(wb_Ent,AuxHVDC);
+            String[][] linHVDC = new String[numLinHVDC][2];
+            for(int i=0; i < numLinHVDC; i++){
+                linHVDC[i][0] = AuxHVDC[i][0];
+                linHVDC[i][1] = AuxHVDC[i][1];
+            }
+        }
+        catch(Exception e){
+            System.out.println("Error leyendo rango HVDC. Asegurese que se encuentra el rango en la planilla Ent y sea un rango válido.");
+        }
+        
         /*
          * Lectura de Generacion (Despachos) y energia no suministrada
          * ===========================================================
@@ -494,13 +512,29 @@ public class Prorratas {
         }
         //aqui plexos
         if(USE_PLEXOS_API){
+            String archivoSalidaPlexos = DirBaseEntrada + SLASH + RUTA_ARCHIVO_PLEXOS;
             System.out.println("Utilizando API de Plexos para leer generacion");
-            PLEXOScaller plexos = new PLEXOScaller("C:/temp/Model PRGMEN Solution.zip");
+            PLEXOScaller plexos = new PLEXOScaller(archivoSalidaPlexos);
             String[] generators = plexos.getGenerators();
+            int numGenPlexos = generators.length;
+            int cntGenPlexos = 0;
             for (String g : generators) {
-                for (int h = 0; h < numHid; h++) {
-                    double[] generation = plexos.getBlockMTGeneration(g, h);
-                    //TODO: Loop, chequea rango etapas y escribe a matriz Gx
+                System.out.println("Reading generator " +g+  " from Plexos. "+ cntGenPlexos+"/"+numGenPlexos);
+                cntGenPlexos++;
+                if (m_nomGen.containsKey(g)) { 
+                    int indexGen = m_nomGen.get(g);
+                    for (int h = 0; h < numHid; h++) {
+                        double[] generation = plexos.getBlockMTGeneration(g, h);
+                        for (int i = etapaPeriodoIni; i < etapaPeriodoFin; i++) {
+                            try {
+                                Gx[indexGen][i - etapaPeriodoIni][h] = (float) generation[i];
+                            } catch (Exception e) {
+                                System.out.println("Error asignando generacion en bloque " + i + " hidro " + h + " para generador " + g);
+                            }
+                        }
+                    }
+                } else {
+                    System.out.println("Generador " + g + " no encontrada en archivo Plexos");
                 }
             }
         }
@@ -791,116 +825,149 @@ public class Prorratas {
                 cont++;
             }
         }
-        try {
-            input = new BufferedReader( new InputStreamReader(new FileInputStream(testReadFile), sEncodingPLP));
-            String line = null;
-            cuenta=0;
-            int indLin=0;
-            int indHid=0;
-            int indEta=0;
-            float Perd=0;
-            String sNomLineaPrev = "";
-            Integer indexLin = null;
-            while (( line = input.readLine()) != null){
-                if(cuenta>0){
-                    if(USE_JAVA_SPLIT_SEPARATOR){
-                        String[] lineItems = line.split(",");
-                        String sHydro = lineItems[0];
-                        String sEtapa = lineItems[1];
-                        String sLinNom = lineItems[4];
-                        String sLinPerP = lineItems[11];
-                        if(sHydro.trim().equals("MEDIA")==false){
-                            if(sHydro.contains("Sim")){
-                                sHydro = sHydro.replace("Sim", "");
-                            }
-                            String sNomLineaActual = sLinNom.trim();
-                            if (!sNomLineaActual.equals(sNomLineaPrev)) {
-                                indexLin = m_nombreLineasSistRed.get(sNomLineaActual);
-                                sNomLineaPrev = sNomLineaActual;
-                            }
-                            if (indexLin != null) {
-                                if (paramLinSistRed[indexLin] > 110) {
-                                    indHid = Integer.valueOf(sHydro.trim())-1;
-                                    if (indHid > numHidLinPLP) {
-                                        numHidLinPLP = indHid;
-                                    }
-                                    if (indHid + 1 > numHid) {
-                                        cuenta++;
-                                        continue;
-                                    }
-                                    indEta = Integer.valueOf(sEtapa.trim())-1;
-                                    if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
-                                        Perd = Float.valueOf(sLinPerP.trim());
-                                        perdidasPLPMayor110[indEta - etapaPeriodoIni][indHid] += Perd;
-                                    }
-                                }
-                            }
-                        }
-                    }if (USE_MAPPED_NAMES) {
-                        if ((line.substring(0, 5).trim()).equals("MEDIA") == false && (line.substring(0, 3).trim()).equals("Sim") == true) {
-                            String sNomLineaActual = (line.substring(33, 81)).trim();
-                            if (!sNomLineaActual.equals(sNomLineaPrev)) {
-                                indexLin = m_nombreLineasSistRed.get(sNomLineaActual);
-                                sNomLineaPrev = sNomLineaActual;
-                            }
-                            if (indexLin != null) {
-                                if (paramLinSistRed[indexLin] > 110) {
-                                    indHid = Integer.valueOf((line.substring(4, line.indexOf(",", 4))).trim()) - 1;
-                                    if (indHid > numHidLinPLP) {
-                                        numHidLinPLP = indHid;
-                                    }
-                                    if (indHid + 1 > numHid) {
-                                        cuenta++;
-                                        continue;
-                                    }
-                                    indEta = Integer.valueOf((line.substring(9, line.indexOf(",", 9))).trim()) - 1;
-                                    if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
-                                        Perd = Float.valueOf(line.substring(129, line.indexOf(",", 129)).trim());
-                                        perdidasPLPMayor110[indEta - etapaPeriodoIni][indHid] += Perd;
-                                    }
-                                }
-                            }
-                        }
-                    } else if(USE_MAPPED_NAMES==false && USE_JAVA_SPLIT_SEPARATOR==false){
-                    if((line.substring(0,5).trim()).equals("MEDIA")==false && (line.substring(0,3).trim()).equals("Sim")==true){
-                        indLin=Calc.Buscar((line.substring(33,81)).trim(),nombreLineasSistRed);
-                        if(indLin>-1){
-                            //System.out.println(indLin+" "+nombreLineasSistRed[indLin]);
-                            indHid=Integer.valueOf((line.substring(4,line.indexOf(",",4))).trim())-1;
-                            indEta=Integer.valueOf((line.substring(9,line.indexOf(",",9))).trim())-1;
-                            Perd=Float.valueOf(line.substring(129,line.indexOf(",",129)).trim());
-                            if (indHid > numHidLinPLP) {
-                                numHidLinPLP = indHid;
-                            }
-                            if (indHid + 1 > numHid) {
-                                cuenta++;
-                                continue;
-                            }
-                            if(indEta<etapaPeriodoFin && indEta>=etapaPeriodoIni){
-                                if(paramLinSistRed[indLin]>110){
-                                    perdidasPLPMayor110[indEta-etapaPeriodoIni][indHid]+=Perd;
+        //Aqui plexos
+        if (USE_PLEXOS_API) {
+            String ArchivoSalidaPlexos = DirBaseEntrada + SLASH + RUTA_ARCHIVO_PLEXOS;
+            System.out.println("Utilizando API de Plexos para leer perdidas");
+            PLEXOScaller plexos = new PLEXOScaller(ArchivoSalidaPlexos);
+            String[] lines = plexos.getLines();
+            int numLinPlexos = lines.length;
+            int cntLinPlexos = 0;
+            for (String l : lines) {
+                System.out.println("Reading line " + l +  "from Plexos. " + cntLinPlexos + "/" + numLinPlexos);
+                cntLinPlexos++;
+                if (m_nombreLineasSistRed.containsKey(l)) {
+                    Integer indexLin=null;
+                    indexLin = m_nombreLineasSistRed.get(l);
+                    if (indexLin != null) {
+                        for (int h = 0; h < numHid; h++) {
+                            double[] losses = plexos.getBlockLoss(l, h);
+                            for (int i = etapaPeriodoIni; i < etapaPeriodoFin; i++) {
+                                try {
+                                    perdidasPLPMayor110[i - etapaPeriodoIni][h] += (float) losses[i];
+                                } catch (Exception e) {
+                                System.out.println("Error en asignación de pérdidas en bloque " + i + " hidro " + h + " para linea " + l);
                                 }
                             }
                         }
                     }
-                    }
+                } else {
+                    System.out.println("Linea " + l + " no encontrada en archivo Plexos");
                 }
-                cuenta++;
-            }
-        } catch (java.io.UnsupportedEncodingException ex) {
-                throw new IOException("Encoding invalido '" + sEncodingPLP + "' archivo flujos plp. Detalles: '" + ex.getMessage() +"'", ex);
-        } catch (NumberFormatException e) {
-            throw new IOException("No fue posible convertir valor en linea '" + cuenta + "' archivo plp '" + ArchivoPerdidasLineas +"'", e);
-        } finally {
-            try {
-                if (input != null) {
-                    input.close();
-                }
-            } catch (IOException ex) {
-                ex.printStackTrace(System.out);
             }
         }
-        numHidLinPLP++; //por que se aumenta nuevamente?
+        else if(USE_PLP_FILES){
+            try {
+                input = new BufferedReader( new InputStreamReader(new FileInputStream(testReadFile), sEncodingPLP));
+                String line = null;
+                cuenta=0;
+                int indLin=0;
+                int indHid=0;
+                int indEta=0;
+                float Perd=0;
+                String sNomLineaPrev = "";
+                Integer indexLin = null;
+                while (( line = input.readLine()) != null){
+                    if(cuenta>0){
+                        if(USE_JAVA_SPLIT_SEPARATOR){
+                            String[] lineItems = line.split(",");
+                            String sHydro = lineItems[0];
+                            String sEtapa = lineItems[1];
+                            String sLinNom = lineItems[4];
+                            String sLinPerP = lineItems[11];
+                            if(sHydro.trim().equals("MEDIA")==false){
+                                if(sHydro.contains("Sim")){
+                                    sHydro = sHydro.replace("Sim", "");
+                                }
+                                String sNomLineaActual = sLinNom.trim();
+                                if (!sNomLineaActual.equals(sNomLineaPrev)) {
+                                    indexLin = m_nombreLineasSistRed.get(sNomLineaActual);
+                                    sNomLineaPrev = sNomLineaActual;
+                                }
+                                if (indexLin != null) {
+                                    if (paramLinSistRed[indexLin] > 110) {
+                                        indHid = Integer.valueOf(sHydro.trim())-1;
+                                        if (indHid > numHidLinPLP) {
+                                            numHidLinPLP = indHid;
+                                        }
+                                        if (indHid + 1 > numHid) {
+                                            cuenta++;
+                                            continue;
+                                        }
+                                        indEta = Integer.valueOf(sEtapa.trim())-1;
+                                        if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
+                                            Perd = Float.valueOf(sLinPerP.trim());
+                                            perdidasPLPMayor110[indEta - etapaPeriodoIni][indHid] += Perd;
+                                        }
+                                    }
+                                }
+                            }
+                        }if (USE_MAPPED_NAMES) {
+                            if ((line.substring(0, 5).trim()).equals("MEDIA") == false && (line.substring(0, 3).trim()).equals("Sim") == true) {
+                                String sNomLineaActual = (line.substring(33, 81)).trim();
+                                if (!sNomLineaActual.equals(sNomLineaPrev)) {
+                                    indexLin = m_nombreLineasSistRed.get(sNomLineaActual);
+                                    sNomLineaPrev = sNomLineaActual;
+                                }
+                                if (indexLin != null) {
+                                    if (paramLinSistRed[indexLin] > 110) {
+                                        indHid = Integer.valueOf((line.substring(4, line.indexOf(",", 4))).trim()) - 1;
+                                        if (indHid > numHidLinPLP) {
+                                            numHidLinPLP = indHid;
+                                        }
+                                        if (indHid + 1 > numHid) {
+                                            cuenta++;
+                                            continue;
+                                        }
+                                        indEta = Integer.valueOf((line.substring(9, line.indexOf(",", 9))).trim()) - 1;
+                                        if (indEta < etapaPeriodoFin && indEta >= etapaPeriodoIni) {
+                                            Perd = Float.valueOf(line.substring(129, line.indexOf(",", 129)).trim());
+                                            perdidasPLPMayor110[indEta - etapaPeriodoIni][indHid] += Perd;
+                                        }
+                                    }
+                                }
+                            }
+                        } else if(USE_MAPPED_NAMES==false && USE_JAVA_SPLIT_SEPARATOR==false){
+                        if((line.substring(0,5).trim()).equals("MEDIA")==false && (line.substring(0,3).trim()).equals("Sim")==true){
+                            indLin=Calc.Buscar((line.substring(33,81)).trim(),nombreLineasSistRed);
+                            if(indLin>-1){
+                                //System.out.println(indLin+" "+nombreLineasSistRed[indLin]);
+                                indHid=Integer.valueOf((line.substring(4,line.indexOf(",",4))).trim())-1;
+                                indEta=Integer.valueOf((line.substring(9,line.indexOf(",",9))).trim())-1;
+                                Perd=Float.valueOf(line.substring(129,line.indexOf(",",129)).trim());
+                                if (indHid > numHidLinPLP) {
+                                    numHidLinPLP = indHid;
+                                }
+                                if (indHid + 1 > numHid) {
+                                    cuenta++;
+                                    continue;
+                                }
+                                if(indEta<etapaPeriodoFin && indEta>=etapaPeriodoIni){
+                                    if(paramLinSistRed[indLin]>110){
+                                        perdidasPLPMayor110[indEta-etapaPeriodoIni][indHid]+=Perd;
+                                    }
+                                }
+                            }
+                        }
+                        }
+                    }
+                    cuenta++;
+                }
+            } catch (java.io.UnsupportedEncodingException ex) {
+                    throw new IOException("Encoding invalido '" + sEncodingPLP + "' archivo flujos plp. Detalles: '" + ex.getMessage() +"'", ex);
+            } catch (NumberFormatException e) {
+                throw new IOException("No fue posible convertir valor en linea '" + cuenta + "' archivo plp '" + ArchivoPerdidasLineas +"'", e);
+            } finally {
+                try {
+                    if (input != null) {
+                        input.close();
+                    }
+                } catch (IOException ex) {
+                    ex.printStackTrace(System.out);
+                }
+            }
+        }
+        numHidLinPLP++; 
         if (numHidLinPLP > numHid) {
             throw new IOException("WARNING: Se encontraron " + numHidLinPLP + " hidrologias en archivo flujos lineas PLP pero solo se leyeron " + numHid);
         } else if (numHidLinPLP < numHid) {
@@ -1979,6 +2046,14 @@ public class Prorratas {
     public static void setPlexosAPIOption(boolean usePlexosAPI){
         USE_PLEXOS_API = usePlexosAPI;
         USE_PLP_FILES = !usePlexosAPI;
+    }
+    
+    /**
+     * Define ruta del archivo plexos para lectura de generacion y flujos
+     * @param ruta ruta completa del archivo comprimido con resultados plexos
+     */
+    public static void setNombreArchivoPlexos(String ruta){
+        RUTA_ARCHIVO_PLEXOS = ruta;
     }
     
     /**

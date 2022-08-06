@@ -54,6 +54,7 @@ public class PeajesCDEC extends javax.swing.JFrame {
     private PrintStream customPrintStream;
     private boolean bShowMensajes = false;
     private boolean bUsePlexosAPI = false;
+    private String sNombreArchivoPlexos="";
 
     /** Creates new form NewJFrame1 */
     public PeajesCDEC() {
@@ -1541,6 +1542,9 @@ public class PeajesCDEC extends javax.swing.JFrame {
         tInicio=System.currentTimeMillis();
         if (continueToProrrata ()) {
             Prorratas.setPlexosAPIOption(bUsePlexosAPI);
+            if(bUsePlexosAPI){
+                Prorratas.setNombreArchivoPlexos(sNombreArchivoPlexos);
+            }
             Prorratas.calcularNotBackground(horizon, f_DirectorioEntrada, f_DirectorioSalida, nAnoAEvaluar, nMesAEvaluar, nAnoBase, nHidro, numEtapasAno, numSlack, offset, clientes);
         }
         
@@ -1562,6 +1566,9 @@ public class PeajesCDEC extends javax.swing.JFrame {
         tInicio=System.currentTimeMillis();
         if (continueToProrrata ()) {
             Prorratas.setPlexosAPIOption(bUsePlexosAPI);
+            if(bUsePlexosAPI){
+                Prorratas.setNombreArchivoPlexos(sNombreArchivoPlexos);
+            }
             Prorratas.calcularNotBackground(horizon, f_DirectorioEntrada, f_DirectorioSalida, year, nMesAEvaluar, nAnoBase, nHidro, numEtapasAno, numSlack, offset, clientes);
         }
         
@@ -1584,6 +1591,9 @@ public class PeajesCDEC extends javax.swing.JFrame {
         tInicio=System.currentTimeMillis();
         if (continueToProrrata ()) {
             Prorratas.setPlexosAPIOption(bUsePlexosAPI);
+            if(bUsePlexosAPI){
+                Prorratas.setNombreArchivoPlexos(sNombreArchivoPlexos);
+            }
             Prorratas.calcular(horizon, f_DirectorioEntrada, f_DirectorioSalida, nAnoAEvaluar, nMesAEvaluar, nAnoBase, nHidro, numEtapasAno, numSlack, offset, clientes);
         }
         
@@ -1828,15 +1838,17 @@ public class PeajesCDEC extends javax.swing.JFrame {
                 return false;
             }
         }
-        File f_plpcen = new File(getSelectedDirectorioEntrada() + SLASH + "plpcen.csv");
-        if (!f_plpcen.exists()) {
-            JOptionPane.showMessageDialog(this, "No se encontró archivo plpcen.csv en directorio " + getSelectedDirectorioEntrada() + "\nDebe copiar archivos plp al directorio", "Error de validación", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
-        File f_plplin = new File(getSelectedDirectorioEntrada() + SLASH + "plplin.csv");
-        if (!f_plplin.exists()) {
-            JOptionPane.showMessageDialog(this, "No se encontró archivo plplin.csv en directorio " + getSelectedDirectorioEntrada() + "\nDebe copiar archivos plp al directorio", "Error de validación", JOptionPane.ERROR_MESSAGE);
-            return false;
+        if (!bUsePlexosAPI) {
+            File f_plpcen = new File(getSelectedDirectorioEntrada() + SLASH + "plpcen.csv");
+            if (!f_plpcen.exists()) {
+                JOptionPane.showMessageDialog(this, "No se encontró archivo plpcen.csv en directorio " + getSelectedDirectorioEntrada() + "\nDebe copiar archivos plp al directorio", "Error de validación", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+            File f_plplin = new File(getSelectedDirectorioEntrada() + SLASH + "plplin.csv");
+            if (!f_plplin.exists()) {
+                JOptionPane.showMessageDialog(this, "No se encontró archivo plplin.csv en directorio " + getSelectedDirectorioEntrada() + "\nDebe copiar archivos plp al directorio", "Error de validación", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
         }
         File f_Salida = new File(getSelectedDirectorioSalida());
         if (!f_Salida.exists()) {
@@ -2286,6 +2298,9 @@ public class PeajesCDEC extends javax.swing.JFrame {
         String sUsarAPIPlexos = getOptionValue("Utilizar API de PLEXOS", PeajesConstant.DataType.BOOLEAN);
         bUsePlexosAPI = Boolean.parseBoolean(sUsarAPIPlexos);
         
+        //Ruta archivo Plexos
+        sNombreArchivoPlexos = getOptionValue("Nombre archivo PLEXOS",PeajesConstant.DataType.STRING);
+
         pack();
         this.validate();
     }
